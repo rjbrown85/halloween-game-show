@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halloween Game Show</title>
+<style>
+:root{
+  --bg:#241628; --panel:#361F3D; --deep:#1A1A1A; --line:#000;
+  --orange:#FF7A2E; --lilac:#C48DC9; --green:#35C86F; --wrong:#6B3A80;
+  --cream:#FFF7EC; --muted:#E6D3EA; --ink:#1A1A1A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--cream);font-family:Arial,Helvetica,system-ui,sans-serif}
+body{min-height:100vh;padding:18px 22px 28px}
+h1,h2,h3,.head{font-family:"Arial Black",Arial,sans-serif;font-weight:900;margin:0;letter-spacing:.5px}
+button{font:inherit;cursor:pointer;border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);border-radius:0;padding:10px 16px;font-weight:800;color:var(--ink);background:var(--cream)}
+button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--line)}
+button:focus-visible{outline:4px solid var(--cream);outline-offset:3px}
+button:disabled{cursor:default;opacity:.35;box-shadow:none;transform:none}
+.hidden{display:none!important}
+.card{background:var(--panel);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);padding:18px}
+.btn-orange{background:var(--orange)}
+.btn-green{background:var(--green)}
+.btn-lilac{background:var(--lilac)}
+.btn-dark{background:var(--deep);color:var(--cream)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+
+/* setup */
+#setup{max-width:1100px;margin:0 auto}
+#setup h1{font-size:clamp(34px,5vw,64px);color:var(--orange);text-align:center;margin:10px 0 4px}
+#setup .sub{text-align:center;color:var(--muted);font-size:20px;margin-bottom:22px}
+.step{margin-bottom:20px}
+.step h2{font-size:24px;margin-bottom:12px;color:var(--cream)}
+.step h2 span{color:var(--orange)}
+.pick{display:flex;gap:10px;flex-wrap:wrap}
+.pick button{min-width:64px;font-size:24px;padding:10px 14px}
+.pick button.on{background:var(--orange)}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.games button{padding:22px;font-size:clamp(24px,3vw,36px);text-align:left;display:block;width:100%}
+.games button small{display:block;font-family:Arial,sans-serif;font-size:18px;font-weight:700;margin-top:8px}
+.note{color:var(--muted);font-size:17px;margin-top:10px}
+
+/* top bar + scores */
+.topbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.topbar h1{font-size:clamp(24px,3vw,38px);color:var(--orange)}
+.topbar button{padding:8px 12px;font-size:16px}
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin-bottom:16px}
+.team{background:var(--deep);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:8px 10px;text-align:center}
+.team .nm{font-size:16px;font-weight:800;color:var(--muted)}
+.team .sc{font-family:"Arial Black",Arial,sans-serif;font-size:28px}
+.team.turn{background:var(--orange);color:var(--ink)}
+.team.turn .nm{color:var(--ink)}
+.team .fix{display:none;gap:6px;justify-content:center;margin-top:4px}
+.fixing .team .fix{display:flex}
+.team .fix button{padding:2px 8px;font-size:15px;box-shadow:2px 2px 0 var(--line)}
+
+.banner{font-size:clamp(24px,3vw,36px);font-family:"Arial Black",Arial,sans-serif;margin:4px 0 14px}
+.banner b{color:var(--orange)}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.cat{background:var(--lilac);color:var(--ink);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:10px 6px;text-align:center;font-family:"Arial Black",Arial,sans-serif;font-size:clamp(15px,1.6vw,22px);display:flex;align-items:center;justify-content:center;min-height:84px}
+.tile{background:var(--orange);font-family:"Arial Black",Arial,sans-serif;font-size:clamp(28px,3.4vw,46px);min-height:clamp(70px,13vh,120px)}
+.tile.used{background:var(--deep);color:#5a4a5e;box-shadow:none;border-color:#000}
+
+/* question */
+.qwrap{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
+.qtag{display:inline-block;background:var(--lilac);color:var(--ink);border:3px solid var(--line);padding:4px 12px;font-weight:900;font-size:18px;margin-bottom:12px}
+.qtext{font-size:clamp(28px,3.2vw,46px);line-height:1.25;font-weight:800;margin-bottom:18px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{background:var(--cream);color:var(--ink);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:14px;font-size:clamp(20px,2.2vw,30px);font-weight:800;display:flex;gap:10px;align-items:center;min-height:78px}
+.choice .L{font-family:"Arial Black",Arial,sans-serif;background:var(--deep);color:var(--cream);min-width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.choice.right{background:var(--green)}
+.choice.dim{opacity:.35}
+.answers h3{font-size:20px;margin-bottom:10px}
+.agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.arow{background:var(--deep);border:3px solid var(--line);padding:6px 8px;display:flex;align-items:center;gap:6px}
+.arow .nm{font-weight:900;font-size:18px;flex:1;white-space:nowrap}
+.arow button{padding:4px 0;width:34px;font-size:17px;box-shadow:2px 2px 0 var(--line)}
+.arow button.on{background:var(--orange)}
+.arow .res{font-family:"Arial Black",Arial,sans-serif;font-size:19px;flex:1;text-align:right}
+.arow.ok{background:var(--green);color:var(--ink)}
+.arow.no{background:var(--wrong);color:#fff}
+.arow.skip{background:#3a2c3e;color:var(--muted)}
+.qactions{margin-top:16px}
+.qactions button{font-size:20px}
+
+/* poll */
+.pollq{font-size:clamp(28px,3.4vw,48px);line-height:1.2;margin-bottom:16px}
+.pollgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pcard{background:var(--cream);color:var(--ink);border:3px solid var(--line);box-shadow:5px 5px 0 var(--line);padding:16px;text-align:left;min-height:120px;display:flex;flex-direction:column;gap:8px}
+.pcard .t{font-size:clamp(24px,2.6vw,36px);font-weight:900}
+.pcard .who{display:flex;gap:6px;flex-wrap:wrap;min-height:28px}
+.pcard .who span{background:var(--deep);color:var(--cream);font-size:15px;font-weight:800;padding:3px 8px}
+.pcard .rank{display:none;font-family:"Arial Black",Arial,sans-serif;font-size:22px}
+.revealed .pcard{cursor:default}
+.revealed .pcard .rank{display:block}
+.pcard.r1{background:var(--green)}
+.pcard.r2{background:var(--orange)}
+.pcard.r3{background:var(--lilac)}
+.pcard.r4{background:#B9A3BF}
+.pollnote{color:var(--muted);font-size:17px;margin-top:12px}
+
+/* final */
+.final{max-width:900px;margin:0 auto}
+.final h1{font-size:clamp(34px,5vw,60px);color:var(--orange);text-align:center;margin-bottom:18px}
+.frow{display:flex;align-items:center;gap:14px;background:var(--deep);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);padding:10px 16px;margin-bottom:10px;font-size:24px;font-weight:800}
+.frow .pl{font-family:"Arial Black",Arial,sans-serif;width:56px}
+.frow .sc{margin-left:auto;font-family:"Arial Black",Arial,sans-serif}
+.frow.win{background:var(--orange);color:var(--ink)}
+
+@media (max-width:900px){
+  .qwrap,.games,.pollgrid{grid-template-columns:1fr}
+  .board{gap:6px}
+  .cat{font-size:13px;min-height:64px;padding:4px}
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<section id="setup">
+  <h1>🎃 Halloween Game Show</h1>
+  <div class="sub">👻 Spooky Points and Pumpkin Poll</div>
+  <div id="resumeBox" class="card step hidden">
+    <div class="row"><h2>💾 A game is saved.</h2><span class="spacer"></span>
+      <button class="btn-green" id="resumeBtn">Continue</button></div>
+  </div>
+  <div class="card step">
+    <h2><span>1.</span> 👥 How many groups?</h2>
+    <div class="pick" id="countPick"></div>
+  </div>
+  <div class="card step">
+    <h2><span>2.</span> 🥇 Which group goes first?</h2>
+    <div class="pick" id="firstPick"></div>
+  </div>
+  <div class="card step">
+    <h2><span>3.</span> 🎮 Which game do we play first?</h2>
+    <div class="games">
+      <button class="btn-orange" data-game="points">🎃 Spooky Points<small>Every group answers. Right +100. Wrong −100. No answer 0.</small></button>
+      <button class="btn-lilac" data-game="poll">📊 Pumpkin Poll<small>Groups pick the #1 answer in turn. #1 = 100, #2 = 75, #3 = 50, #4 = 25.</small></button>
+    </div>
+    <div class="note">⭐ Scores carry across both games. Starting here resets all scores to 0.</div>
+  </div>
+</section>
+
+<!-- GAME SHELL -->
+<section id="game" class="hidden">
+  <div class="topbar">
+    <h1 id="gameTitle"></h1><span class="spacer"></span>
+    <button class="btn-dark" id="switchBtn">🔀 Switch game</button>
+    <button class="btn-dark" id="fixBtn">✏️ Fix scores</button>
+    <button class="btn-green" id="finalBtn">🏆 Final scores</button>
+    <button class="btn-dark" id="menuBtn">🏠 Menu</button>
+  </div>
+  <div class="scores" id="scores"></div>
+
+  <!-- Spooky Points board -->
+  <div id="pBoard">
+    <div class="banner" id="pBanner"></div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- Spooky Points question -->
+  <div id="pQuestion" class="hidden">
+    <div class="qwrap">
+      <div class="card">
+        <div class="qtag" id="qCat"></div>
+        <div class="qtext" id="qText"></div>
+        <div class="choices" id="qChoices"></div>
+      </div>
+      <div class="card answers">
+        <h3>📝 Tap each group's letter. No tap = no answer.</h3>
+        <div class="agrid" id="aGrid"></div>
+        <div class="row qactions">
+          <button class="btn-orange" id="revealBtn">🎃 Reveal answer</button>
+          <button class="btn-dark" id="cancelBtn">↩️ Back</button>
+          <button class="btn-green hidden" id="doneBtn">✅ Back to board</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pumpkin Poll -->
+  <div id="poll" class="hidden">
+    <div class="banner" id="pollBanner"></div>
+    <div class="card">
+      <div class="qtag" id="pollRound"></div>
+      <div class="pollq head" id="pollQ"></div>
+      <div class="pollgrid" id="pollGrid"></div>
+      <div class="row qactions">
+        <button class="btn-dark" id="skipBtn">⏭️ No answer</button>
+        <button class="btn-dark" id="undoBtn">↩️ Undo pick</button>
+        <span class="spacer"></span>
+        <button class="btn-orange" id="pollRevealBtn">🎃 Reveal ranks</button>
+        <button class="btn-green hidden" id="nextRoundBtn">➡️ Next round</button>
+      </div>
+      <div class="pollnote">📊 All 4 answers are good answers. Which one is the most popular?</div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section id="final" class="final hidden">
+  <h1>🏆 Final Scores</h1>
+  <div id="finalList"></div>
+  <div class="row" style="justify-content:center;margin-top:18px">
+    <button class="btn-dark" id="backToGame">↩️ Back to the game</button>
+    <button class="btn-orange" id="finalMenu">🏠 Menu</button>
+  </div>
+</section>
+
+<script>
+const POINTS = [
+  { cat: '👾 Monsters, Inc.', qs: [
+    { q: 'How many eyes does Mike Wazowski have?', c: ['1', '2', '3', '4'], a: 0 },
+    { q: 'What is the little girl\'s name?', c: ['Elsa', 'Boo', 'Moana', 'Riley'], a: 1 },
+    { q: 'At first, the monster city gets its power from kids\'…', c: ['snacks', 'toys', 'screams', 'shoes'], a: 2 },
+  ]},
+  { cat: '🎬 Kids\' Movies', qs: [
+    { q: 'In Hotel Transylvania, who runs the hotel?', c: ['A mummy', 'A werewolf', 'A zombie', 'Dracula'], a: 3 },
+    { q: 'In Coco, Miguel wants to be a…', c: ['musician', 'chef', 'doctor', 'pilot'], a: 0 },
+    { q: 'Jack Skellington is the Pumpkin King of…', c: ['Christmas Town', 'Halloween Town', 'Toy Town', 'Monster City'], a: 1 },
+  ]},
+  { cat: '🌍 Around the World', qs: [
+    { q: 'Day of the Dead comes from which country?', c: ['Japan', 'Egypt', 'Mexico', 'Canada'], a: 2 },
+    { q: 'The first jack-o\'-lanterns in Ireland were carved from…', c: ['watermelons', 'pineapples', 'coconuts', 'turnips'], a: 3 },
+    { q: 'At China\'s Hungry Ghost Festival, people float ___ on the water.', c: ['lanterns', 'pumpkins', 'umbrellas', 'balloons'], a: 0 },
+  ]},
+  { cat: '➗ Spooky Math', qs: [
+    { q: 'A remainder must be ___ than the divisor.', c: ['more', 'less', 'equal', 'double'], a: 1 },
+    { q: '🍬 90 candies go in bags of 30. How many bags?', c: ['6', '30', '3', '120'], a: 2 },
+    { q: '🎃 274 candies go in packs of 30. How many full packs?', c: ['7', '8', '10', '9'], a: 3 },
+  ]},
+  { cat: '📖 Spooky Reading', qs: [
+    { q: 'The setting tells us…', c: ['where and when', 'who wins', 'how it ends', 'the title'], a: 0 },
+    { q: 'In SWBST, what does W stand for?', c: ['Wrote', 'Wanted', 'Went', 'Won'], a: 1 },
+    { q: 'A summary keeps…', c: ['every small detail', 'only the ending', 'only the key details', 'the pictures'], a: 2 },
+  ]},
+  { cat: '✏️ Spooky Writing', qs: [
+    { q: 'In ARMS, what does A stand for?', c: ['Ask', 'Act', 'After', 'Add'], a: 3 },
+    { q: 'Fixing spelling and capital letters is called…', c: ['editing', 'revising', 'drafting', 'drawing'], a: 0 },
+    { q: '"The pumpkin was good." becomes "The pumpkin glowed on our dark porch." Which ARMS move?', c: ['Add', 'Substitute', 'Remove', 'Move'], a: 1 },
+  ]},
+];
+
+// r = rank (1 is most popular). Display order is mixed on purpose.
+const POLL = [
+  { q: 'Name something people do on Halloween.', c: [['Wear a costume', 2], ['Go to a party', 4], ['Trick-or-treat', 1], ['Carve a pumpkin', 3]] },
+  { q: 'Name a Halloween monster.', c: [['Vampire', 3], ['Ghost', 1], ['Zombie', 4], ['Witch', 2]] },
+  { q: 'Name something you get when you trick-or-treat.', c: [['Gummies', 3], ['Stickers', 4], ['Lollipops', 2], ['Chocolate', 1]] },
+  { q: 'Name a Halloween animal.', c: [['Black cat', 1], ['Owl', 4], ['Spider', 3], ['Bat', 2]] },
+  { q: 'Name something orange at Halloween.', c: [['Candy corn', 2], ['A tiger costume', 4], ['Pumpkin', 1], ['Orange leaves', 3]] },
+  { q: 'Name something in a haunted house.', c: [['Skeleton', 3], ['Spider webs', 2], ['Creaky door', 4], ['Ghost', 1]] },
+  { q: 'Name a popular Halloween costume.', c: [['Princess', 3], ['Superhero', 1], ['Pirate', 4], ['Witch', 2]] },
+  { q: 'Name something you say on Halloween.', c: [['"Boo!"', 2], ['"Thank you!"', 4], ['"Happy Halloween!"', 3], ['"Trick or treat!"', 1]] },
+];
+const RANK_PTS = { 1: 100, 2: 75, 3: 50, 4: 25 };
+const LETTERS = ['A', 'B', 'C', 'D'];
+const KEY = 'halloween-game-show-v1';
+
+let S = null;
+const $ = id => document.getElementById(id);
+const show = (el, on) => el.classList.toggle('hidden', !on);
+const fmt = n => (n < 0 ? '−' + Math.abs(n) : String(n));
+
+function fresh(n, first) {
+  return {
+    n, first, names: Array.from({ length: n }, (_, i) => 'Table ' + (i + 1)), scores: Array(n).fill(0),
+    game: 'points', screen: 'board',
+    p: { used: {}, turn: first, open: null, picks: {}, revealed: false },
+    poll: { round: 0, order: [], step: 0, picks: {}, revealed: false },
+  };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+
+// ---------- setup ----------
+let setupN = 4, setupFirst = 0;
+function drawSetup() {
+  const cp = $('countPick'); cp.innerHTML = '';
+  for (let n = 2; n <= 10; n++) {
+    const b = document.createElement('button'); b.textContent = n; if (n === setupN) b.className = 'on';
+    b.onclick = () => { setupN = n; if (setupFirst >= n) setupFirst = 0; drawSetup(); };
+    cp.appendChild(b);
+  }
+  const fp = $('firstPick'); fp.innerHTML = '';
+  for (let i = 0; i < setupN; i++) {
+    const b = document.createElement('button'); b.textContent = 'Table ' + (i + 1); if (i === setupFirst) b.className = 'on';
+    b.style.fontSize = '20px';
+    b.onclick = () => { setupFirst = i; drawSetup(); };
+    fp.appendChild(b);
+  }
+  show($('resumeBox'), !!load());
+}
+document.querySelectorAll('.games button').forEach(b => b.onclick = () => {
+  S = fresh(setupN, setupFirst); S.game = b.dataset.game;
+  if (S.game === 'poll') startRound(0);
+  save(); render();
+});
+$('resumeBtn').onclick = () => { S = load(); render(); };
+
+// ---------- shell ----------
+function render() {
+  show($('setup'), !S); show($('game'), !!S && S.screen !== 'final'); show($('final'), !!S && S.screen === 'final');
+  if (!S) { drawSetup(); return; }
+  if (S.screen === 'final') return drawFinal();
+  $('gameTitle').textContent = S.game === 'points' ? '🎃 Spooky Points' : '📊 Pumpkin Poll';
+  drawScores();
+  const inQ = S.game === 'points' && S.p.open;
+  show($('pBoard'), S.game === 'points' && !inQ);
+  show($('pQuestion'), inQ);
+  show($('poll'), S.game === 'poll');
+  if (S.game === 'points') inQ ? drawQuestion() : drawBoard(); else drawPoll();
+}
+function turnIdx() {
+  if (S.game === 'points') return S.p.open ? -1 : S.p.turn;
+  return S.poll.revealed ? -1 : (S.poll.order[S.poll.step] ?? -1);
+}
+function drawScores() {
+  const box = $('scores'); box.innerHTML = '';
+  const t = turnIdx();
+  S.names.forEach((nm, i) => {
+    const d = document.createElement('div'); d.className = 'team' + (i === t ? ' turn' : '');
+    d.innerHTML = `<div class="nm">${nm}</div><div class="sc">${fmt(S.scores[i])}</div>
+      <div class="fix"><button data-d="-25">−25</button><button data-d="25">+25</button></div>`;
+    d.querySelectorAll('.fix button').forEach(b => b.onclick = () => { S.scores[i] += +b.dataset.d; save(); drawScores(); });
+    box.appendChild(d);
+  });
+}
+$('fixBtn').onclick = () => $('scores').classList.toggle('fixing');
+$('switchBtn').onclick = () => {
+  S.game = S.game === 'points' ? 'poll' : 'points';
+  if (S.game === 'poll' && !S.poll.order.length) startRound(S.poll.round);
+  save(); render();
+};
+$('finalBtn').onclick = () => { S.screen = 'final'; save(); render(); };
+$('menuBtn').onclick = () => { save(); S = null; render(); };
+$('backToGame').onclick = () => { S.screen = 'board'; save(); render(); };
+$('finalMenu').onclick = () => { save(); S = null; render(); };
+
+// ---------- Spooky Points ----------
+function drawBoard() {
+  const left = 18 - Object.keys(S.p.used).length;
+  $('pBanner').innerHTML = left
+    ? `<b>${S.names[S.p.turn]}</b>, pick a category! Everyone answers.`
+    : '🎉 The board is done! Tap <b>Final scores</b>.';
+  const b = $('board'); b.innerHTML = '';
+  POINTS.forEach(c => { const d = document.createElement('div'); d.className = 'cat'; d.textContent = c.cat; b.appendChild(d); });
+  for (let r = 0; r < 3; r++) POINTS.forEach((c, ci) => {
+    const k = ci + '-' + r, used = S.p.used[k];
+    const t = document.createElement('button'); t.className = 'tile' + (used ? ' used' : '');
+    t.textContent = used ? '✓' : '100'; t.disabled = !!used;
+    t.setAttribute('aria-label', `${c.cat}, question ${r + 1}`);
+    t.onclick = () => { S.p.open = k; S.p.picks = {}; S.p.revealed = false; save(); render(); };
+    b.appendChild(t);
+  });
+}
+function curQ() { const [ci, r] = S.p.open.split('-').map(Number); return { cat: POINTS[ci].cat, ...POINTS[ci].qs[r] }; }
+function drawQuestion() {
+  const Q = curQ(), rev = S.p.revealed;
+  $('qCat').textContent = Q.cat + ' • 100';
+  $('qText').textContent = Q.q;
+  const ch = $('qChoices'); ch.innerHTML = '';
+  Q.c.forEach((t, i) => {
+    const d = document.createElement('div');
+    d.className = 'choice' + (rev ? (i === Q.a ? ' right' : ' dim') : '');
+    d.innerHTML = `<span class="L">${LETTERS[i]}</span><span></span>`; d.lastChild.textContent = t;
+    ch.appendChild(d);
+  });
+  const g = $('aGrid'); g.innerHTML = '';
+  S.names.forEach((nm, ti) => {
+    const pick = S.p.picks[ti];
+    const row = document.createElement('div'); row.className = 'arow';
+    if (!rev) {
+      row.innerHTML = `<span class="nm">${nm}</span>`;
+      LETTERS.forEach((L, li) => {
+        const b = document.createElement('button'); b.textContent = L; if (pick === li) b.className = 'on';
+        b.onclick = () => { if (S.p.picks[ti] === li) delete S.p.picks[ti]; else S.p.picks[ti] = li; save(); drawQuestion(); };
+        row.appendChild(b);
+      });
+    } else {
+      const res = pick === undefined ? ['skip', '— 0'] : pick === Q.a ? ['ok', `${LETTERS[pick]} ✓ +100`] : ['no', `${LETTERS[pick]} ✗ −100`];
+      row.classList.add(res[0]);
+      row.innerHTML = `<span class="nm">${nm}</span><span class="res">${res[1]}</span>`;
+    }
+    g.appendChild(row);
+  });
+  show($('revealBtn'), !rev); show($('cancelBtn'), !rev); show($('doneBtn'), rev);
+}
+$('revealBtn').onclick = () => {
+  if (S.p.revealed) return;
+  const Q = curQ();
+  S.names.forEach((_, ti) => { const p = S.p.picks[ti]; if (p !== undefined) S.scores[ti] += p === Q.a ? 100 : -100; });
+  S.p.revealed = true; S.p.used[S.p.open] = true;
+  save(); render();
+};
+$('cancelBtn').onclick = () => { S.p.open = null; S.p.picks = {}; save(); render(); };
+$('doneBtn').onclick = () => { S.p.open = null; S.p.picks = {}; S.p.revealed = false; S.p.turn = (S.p.turn + 1) % S.n; save(); render(); };
+
+// ---------- Pumpkin Poll ----------
+function startRound(r) {
+  const start = (S.first + r) % S.n;
+  S.poll.round = r; S.poll.step = 0; S.poll.picks = {}; S.poll.revealed = false;
+  S.poll.order = Array.from({ length: S.n }, (_, i) => (start + i) % S.n);
+}
+function drawPoll() {
+  const P = S.poll, R = POLL[P.round], rev = P.revealed;
+  const cur = P.order[P.step];
+  $('pollRound').textContent = `Round ${P.round + 1} of ${POLL.length}`;
+  $('pollQ').textContent = R.q;
+  $('pollBanner').innerHTML = rev
+    ? (P.round + 1 < POLL.length ? 'Ranks revealed! Ready for the next round?' : '🎉 That was the last round! Tap <b>Final scores</b>.')
+    : cur !== undefined ? `<b>${S.names[cur]}</b>, which answer is #1?` : 'Every group has picked. Reveal the ranks!';
+  const g = $('pollGrid'); g.innerHTML = ''; g.classList.toggle('revealed', rev);
+  R.c.forEach(([t, rank], i) => {
+    const b = document.createElement('button');
+    b.className = 'pcard' + (rev ? ' r' + rank : '');
+    const who = Object.keys(P.picks).filter(k => P.picks[k] === i).map(k => `<span>${S.names[k]}</span>`).join('');
+    b.innerHTML = `<span class="t"></span><span class="rank">#${rank} • ${RANK_PTS[rank]} points</span><span class="who">${who}</span>`;
+    b.firstChild.textContent = t;
+    b.disabled = rev || cur === undefined;
+    if (rev) { b.disabled = false; b.style.opacity = 1; b.onclick = null; b.tabIndex = -1; }
+    else b.onclick = () => { P.picks[cur] = i; P.step++; save(); render(); };
+    g.appendChild(b);
+  });
+  $('skipBtn').disabled = rev || cur === undefined;
+  $('undoBtn').disabled = rev || P.step === 0;
+  show($('pollRevealBtn'), !rev); show($('nextRoundBtn'), rev && P.round + 1 < POLL.length);
+}
+$('skipBtn').onclick = () => { const P = S.poll; if (P.step < P.order.length) { delete P.picks[P.order[P.step]]; P.step++; save(); render(); } };
+$('undoBtn').onclick = () => { const P = S.poll; if (P.step > 0) { P.step--; delete P.picks[P.order[P.step]]; save(); render(); } };
+$('pollRevealBtn').onclick = () => {
+  const P = S.poll; if (P.revealed) return;
+  const R = POLL[P.round];
+  Object.keys(P.picks).forEach(k => { S.scores[k] += RANK_PTS[R.c[P.picks[k]][1]]; });
+  P.revealed = true; save(); render();
+};
+$('nextRoundBtn').onclick = () => { startRound(S.poll.round + 1); save(); render(); };
+
+// ---------- final ----------
+function drawFinal() {
+  const order = S.names.map((nm, i) => ({ nm, sc: S.scores[i] })).sort((a, b) => b.sc - a.sc);
+  const top = order[0].sc;
+  let place = 0, prev = null;
+  $('finalList').innerHTML = order.map((o, i) => {
+    if (o.sc !== prev) { place = i + 1; prev = o.sc; }
+    const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : place;
+    return `<div class="frow${o.sc === top ? ' win' : ''}"><span class="pl">${medal}</span><span>${o.nm}</span><span class="sc">${fmt(o.sc)}</span></div>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>
